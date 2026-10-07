@@ -7,7 +7,6 @@ export async function updateProfile(
   data: {
     display_name?: string;
     bio?: string;
-    avatar_url?: string;
   },
   client?: any
 ): Promise<{ success: boolean; profile?: Profile; error?: string }> {
@@ -22,13 +21,14 @@ export async function updateProfile(
 
   const updatePayload: Record<string, any> = {};
   if (data.display_name !== undefined) {
-    updatePayload.display_name = data.display_name.trim() || "User";
+    const trimmedName = data.display_name.trim();
+    if (!trimmedName) {
+      return { success: false, error: "Display name cannot be empty" };
+    }
+    updatePayload.display_name = trimmedName;
   }
   if (data.bio !== undefined) {
     updatePayload.bio = data.bio.trim();
-  }
-  if (data.avatar_url !== undefined) {
-    updatePayload.avatar_url = data.avatar_url;
   }
 
   const { data: updated, error } = await supabase
@@ -58,25 +58,6 @@ export async function getProfileByUsername(
     .from("profiles")
     .select("*")
     .eq("username", username)
-    .single();
-
-  if (error || !data) {
-    return null;
-  }
-
-  return data;
-}
-
-export async function getProfileById(
-  id: string,
-  client?: any
-): Promise<Profile | null> {
-  const supabase = client || (await createServerClient());
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", id)
     .single();
 
   if (error || !data) {

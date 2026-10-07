@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/actions/auth";
 import { getPostById } from "@/actions/posts";
-import { PostCard } from "@/components/PostCard";
+import { PostDetailClient } from "@/components/PostDetailClient";
 import { ArrowLeft } from "lucide-react";
 
 export const revalidate = 0;
@@ -38,11 +38,7 @@ export default async function PostDetailPage({ params }: PostPageProps) {
       </header>
 
       {/* Post Details Card */}
-      <PostCard
-        post={post}
-        currentUser={currentUser}
-        defaultExpandComments={true}
-      />
+      <PostDetailClient post={post} currentUser={currentUser} />
     </div>
   );
 }

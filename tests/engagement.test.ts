@@ -182,4 +182,35 @@ describe("Engagement Service Seam", () => {
       expect(result.success).toBe(true);
     });
   });
+
+  describe("getCommentsForPost", () => {
+    it("retrieves comments with author profiles for a given post", async () => {
+      const mockCommentsData = [
+        {
+          id: "comm-1",
+          post_id: "post-1",
+          user_id: "user-2",
+          content: "First reply!",
+          created_at: "2026-10-07T09:30:00Z",
+          author: { id: "user-2", username: "bob", display_name: "Bob", avatar_url: "", bio: "", created_at: "" },
+        },
+      ];
+
+      const mockSupabase = {
+        from: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({ data: mockCommentsData, error: null }),
+            }),
+          }),
+        }),
+      };
+
+      const { getCommentsForPost } = await import("@/actions/engagement");
+      const comments = await getCommentsForPost("post-1", mockSupabase as any);
+      expect(comments).toHaveLength(1);
+      expect(comments[0].content).toBe("First reply!");
+      expect(comments[0].author.username).toBe("bob");
+    });
+  });
 });

@@ -100,4 +100,33 @@ describe("Profile Service Seam", () => {
       expect(result.profile?.bio).toBe("Next.js enthusiast");
     });
   });
+
+  describe("getProfileByUsername", () => {
+    it("retrieves public profile by username handle", async () => {
+      const mockProfile = {
+        id: "user-123",
+        username: "alice_w",
+        display_name: "Alice Wonder",
+        bio: "Explorer",
+        avatar_url: "",
+        created_at: new Date().toISOString(),
+      };
+
+      const mockSupabase = {
+        from: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: mockProfile, error: null }),
+            }),
+          }),
+        }),
+      };
+
+      const { getProfileByUsername } = await import("@/actions/profile");
+      const profile = await getProfileByUsername("alice_w", mockSupabase as any);
+      expect(profile).not.toBeNull();
+      expect(profile?.username).toBe("alice_w");
+      expect(profile?.display_name).toBe("Alice Wonder");
+    });
+  });
 });

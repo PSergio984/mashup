@@ -170,7 +170,7 @@ export function CommentsSection({
                     <button
                       onClick={() => handleDelete(comment.id)}
                       title="Delete reply"
-                      className="opacity-0 group-hover/comment:opacity-100 text-neutral-500 hover:text-red-400 transition p-1"
+                      className="opacity-100 md:opacity-0 md:group-hover/comment:opacity-100 text-neutral-500 hover:text-red-400 transition p-1"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

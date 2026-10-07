@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { validatePostContent } from "@/lib/validations";
-import { createPost, deletePost } from "@/actions/posts";
+import { createPost, deletePost, getFeedPosts } from "@/actions/posts";
 
 describe("Posts Service Seam", () => {
   describe("validatePostContent", () => {
@@ -130,6 +130,51 @@ describe("Posts Service Seam", () => {
 
       const result = await deletePost("post-1", mockSupabase as any);
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe("getFeedPosts", () => {
+    it("returns formatted feed posts in chronological order", async () => {
+      const mockPostsData = [
+        {
+          id: "post-2",
+          user_id: "user-1",
+          content: "Second post",
+          created_at: "2026-10-07T10:00:00Z",
+          author: { id: "user-1", username: "alice", display_name: "Alice", avatar_url: "", bio: "", created_at: "" },
+          likes: [{ user_id: "user-1" }],
+          comments: [{ id: "c-1" }],
+        },
+        {
+          id: "post-1",
+          user_id: "user-2",
+          content: "First post",
+          created_at: "2026-10-07T09:00:00Z",
+          author: { id: "user-2", username: "bob", display_name: "Bob", avatar_url: "", bio: "", created_at: "" },
+          likes: [],
+          comments: [],
+        },
+      ];
+
+      const mockSupabase = {
+        auth: {
+          getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1" } }, error: null }),
+        },
+        from: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({ data: mockPostsData, error: null }),
+          }),
+        }),
+      };
+
+      const feed = await getFeedPosts(mockSupabase as any);
+      expect(feed).toHaveLength(2);
+      expect(feed[0].id).toBe("post-2");
+      expect(feed[0].likes_count).toBe(1);
+      expect(feed[0].is_liked_by_user).toBe(true);
+      expect(feed[1].id).toBe("post-1");
+      expect(feed[1].likes_count).toBe(0);
+      expect(feed[1].is_liked_by_user).toBe(false);
     });
   });
 });

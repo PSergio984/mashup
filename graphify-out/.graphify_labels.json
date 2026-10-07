@@ -1,0 +1,16 @@
+{
+  "0": "types.ts",
+  "1": "compilerOptions",
+  "2": "[username]/page.tsx",
+  "3": "dependencies",
+  "4": "devDependencies",
+  "5": "getCurrentUser",
+  "6": "auth.ts",
+  "7": "posts.ts",
+  "8": "scripts",
+  "9": "src/middleware.ts",
+  "10": "next.config.ts",
+  "11": "postcss.config.mjs",
+  "12": "client.ts",
+  "13": "vitest.config.ts"
+}

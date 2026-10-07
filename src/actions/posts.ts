@@ -4,6 +4,38 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { validatePostContent } from "@/lib/validations";
 import { Post, PostWithDetails } from "@/lib/types";
 
+const POST_PROJECTION = `
+  id,
+  user_id,
+  content,
+  created_at,
+  author:profiles!posts_user_id_fkey (
+    id,
+    username,
+    display_name,
+    avatar_url,
+    bio,
+    created_at
+  ),
+  likes:likes (user_id),
+  comments:comments (id)
+`;
+
+function formatPostRecord(record: any, currentUserId?: string): PostWithDetails {
+  return {
+    id: record.id,
+    user_id: record.user_id,
+    content: record.content,
+    created_at: record.created_at,
+    author: Array.isArray(record.author) ? record.author[0] : record.author,
+    likes_count: record.likes?.length || 0,
+    comments_count: record.comments?.length || 0,
+    is_liked_by_user: currentUserId
+      ? record.likes?.some((l: any) => l.user_id === currentUserId)
+      : false,
+  };
+}
+
 export async function createPost(
   content: string,
   client?: any
@@ -89,40 +121,14 @@ export async function getFeedPosts(client?: any): Promise<PostWithDetails[]> {
 
   const { data: posts, error } = await supabase
     .from("posts")
-    .select(`
-      id,
-      user_id,
-      content,
-      created_at,
-      author:profiles!posts_user_id_fkey (
-        id,
-        username,
-        display_name,
-        avatar_url,
-        bio,
-        created_at
-      ),
-      likes:likes (user_id),
-      comments:comments (id)
-    `)
+    .select(POST_PROJECTION)
     .order("created_at", { ascending: false });
 
   if (error || !posts) {
     return [];
   }
 
-  return posts.map((p: any) => ({
-    id: p.id,
-    user_id: p.user_id,
-    content: p.content,
-    created_at: p.created_at,
-    author: Array.isArray(p.author) ? p.author[0] : p.author,
-    likes_count: p.likes?.length || 0,
-    comments_count: p.comments?.length || 0,
-    is_liked_by_user: user
-      ? p.likes?.some((l: any) => l.user_id === user.id)
-      : false,
-  }));
+  return posts.map((post: any) => formatPostRecord(post, user?.id));
 }
 
 export async function getUserPosts(
@@ -136,22 +142,7 @@ export async function getUserPosts(
 
   const { data: posts, error } = await supabase
     .from("posts")
-    .select(`
-      id,
-      user_id,
-      content,
-      created_at,
-      author:profiles!posts_user_id_fkey (
-        id,
-        username,
-        display_name,
-        avatar_url,
-        bio,
-        created_at
-      ),
-      likes:likes (user_id),
-      comments:comments (id)
-    `)
+    .select(POST_PROJECTION)
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
@@ -159,18 +150,7 @@ export async function getUserPosts(
     return [];
   }
 
-  return posts.map((p: any) => ({
-    id: p.id,
-    user_id: p.user_id,
-    content: p.content,
-    created_at: p.created_at,
-    author: Array.isArray(p.author) ? p.author[0] : p.author,
-    likes_count: p.likes?.length || 0,
-    comments_count: p.comments?.length || 0,
-    is_liked_by_user: user
-      ? p.likes?.some((l: any) => l.user_id === user.id)
-      : false,
-  }));
+  return posts.map((post: any) => formatPostRecord(post, user?.id));
 }
 
 export async function getPostById(
@@ -182,41 +162,15 @@ export async function getPostById(
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: p, error } = await supabase
+  const { data: post, error } = await supabase
     .from("posts")
-    .select(`
-      id,
-      user_id,
-      content,
-      created_at,
-      author:profiles!posts_user_id_fkey (
-        id,
-        username,
-        display_name,
-        avatar_url,
-        bio,
-        created_at
-      ),
-      likes:likes (user_id),
-      comments:comments (id)
-    `)
+    .select(POST_PROJECTION)
     .eq("id", postId)
     .single();
 
-  if (error || !p) {
+  if (error || !post) {
     return null;
   }
 
-  return {
-    id: p.id,
-    user_id: p.user_id,
-    content: p.content,
-    created_at: p.created_at,
-    author: Array.isArray(p.author) ? p.author[0] : p.author,
-    likes_count: p.likes?.length || 0,
-    comments_count: p.comments?.length || 0,
-    is_liked_by_user: user
-      ? p.likes?.some((l: any) => l.user_id === user.id)
-      : false,
-  };
+  return formatPostRecord(post, user?.id);
 }
